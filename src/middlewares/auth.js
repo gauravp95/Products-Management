@@ -13,14 +13,14 @@ const auth = async(req, res, next) => {
         
         let decodeToken = jwt.decode(splitToken[1], 'Product-Management')
         if (!decodeToken) {
-            return res.status(403).send({ status: false, message: `Invalid authentication token in request ` })
+            return res.status(403).send({ status: false, message: 'Invalid authentication token in request'})
         }
         if (Date.now() > (decodeToken.exp) * 1000) {
-            return res.status(404).send({ status: false, message: `Session Expired, please login again` })
+            return res.status(404).send({ status: false, message: 'Session Expired, please login again' })
         }
          let verify =  jwt.verify(splitToken[1], 'Product-Management')
         if (!verify) {
-            return res.status(403).send({ status: false, message: `Invalid authentication token in request` })
+            return res.status(403).send({ status: false, message: 'Invalid authentication token in request' })
         }
         req.userId = decodeToken.userId
         next()

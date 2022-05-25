@@ -355,7 +355,7 @@ const updateProfile = async function (req,res) {
             }
         }
 
-        let changeProfileDetails = await userModel.findOneAndUpdate({ _id: userId }, {
+        let updatedProfile = await userModel.findOneAndUpdate({ _id: userId }, {
             $set: {
                 fname: fname,
                 lname: lname,
@@ -371,7 +371,7 @@ const updateProfile = async function (req,res) {
                 'address.billing.pincode': billingPincode
             }
         }, { new: true })
-        return res.status(200).send({ status: true, data: changeProfileDetails })
+        return res.status(200).send({ status: true, data: updatedProfile })
       
     } catch (err) {
         console.log(err);
