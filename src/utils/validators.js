@@ -18,4 +18,9 @@ const validString = function(value) {
     return true;
 }
 
-module.exports = {isValid, isValidObjectId, isValidRequestBody, validString}
+const validInstallment = function isInteger(value) {
+    if (value < 0) return false
+    if (value % 1 == 0) return true;
+}
+
+module.exports = {isValid, isValidObjectId, isValidRequestBody, validString, validInstallment}

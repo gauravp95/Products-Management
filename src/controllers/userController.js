@@ -371,7 +371,7 @@ const updateProfile = async function (req,res) {
                 'address.billing.pincode': billingPincode
             }
         }, { new: true })
-        return res.status(200).send({ status: true, data: updatedProfile })
+        return res.status(200).send({ status: true,message:'Profile updated successfully',data: updatedProfile })
       
     } catch (err) {
         console.log(err);
