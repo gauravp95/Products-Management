@@ -2,7 +2,6 @@ const {isValidRequestBody,isValid, validInstallment,isValidObjectId} = require('
 const productModel = require('../models/productModel');
 const config = require('../utils/awsconfig');
 const currSymbl = require('currency-symbol-map');
-const { options } = require('../routes/route');
 
 const newProduct = async function (req,res) {
     try {
