@@ -23,4 +23,9 @@ const validInstallment = function isInteger(value) {
     if (value % 1 == 0) return true;
 }
 
-module.exports = {isValid, isValidObjectId, isValidRequestBody, validString, validInstallment}
+const validQuantity = function isInteger(value) {
+    if (value < 1) return false
+    if (isNaN(Number(value))) return false
+    if (value % 1 == 0) return true
+}
+module.exports = {isValid, isValidObjectId, isValidRequestBody, validString, validInstallment, validQuantity}

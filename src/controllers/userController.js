@@ -157,7 +157,7 @@ const userLogin = async function (req,res) {
             exp: Math.floor(Date.now()/1000 + 3600*24*7)
         }, 'Product-Management');
 
-        return res.status(201).send({status:true,message:'Token created Successfully',data:token});
+        return res.status(201).send({status:true,message:'Token created Successfully',data:{userId:user._id,token:token}});
         
     } catch (err) {
         return res.status(500).send({status:false,message:err.message})
