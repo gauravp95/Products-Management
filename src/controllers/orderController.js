@@ -59,6 +59,11 @@ const createOrder = async function (req,res) {
                 return res.status(400).send({status: false,message: `Status must be among ['pending','completed','cancelled'].`,});
             }
         }
+        
+        const cartExists = await cartModel.findOne({_id:cartId})
+        if (cartExists.items.length == 0) {
+            return res.status(400).send({status:false,message:'No items in cart, Please put items in cart first'})
+        }
 
         const reducer = (previousValue, currentValue) =>
         previousValue + currentValue;
@@ -104,12 +109,12 @@ const updateOrder = async(req, res) => {
         const userIdFromToken = req.userId
 
         //validating request body.
-        if (!validator.isValidRequestBody(requestBody)) {
+        if (!isValidRequestBody(requestBody)) {
             return res.status(400).send({status: false,message: "Invalid request body. Please provide the the input to proceed.",});
         }
         //extract params
         const { orderId, status } = requestBody;
-        if (!validator.isValidObjectId(userId)) {
+        if (!isValidObjectId(userId)) {
             return res.status(400).send({ status: false, message: "Invalid userId in params." });
         }
         const searchUser = await userModel.findOne({ _id: userId });
@@ -136,13 +141,13 @@ const updateOrder = async(req, res) => {
         if (!status) {
             return res.status(400).send({status: true,message: "Mandatory paramaters not provided. Please enter current status of the order."});
         }
-        if (!validator.isValidStatus(status)) {
+        if (!isValidStatus(status)) {
             return res.status(400).send({status: true,message: "Invalid status in request body. Choose either 'pending','completed', or 'cancelled'."});
         }
 
         //if cancellable is true then status can be updated to any of te choices.
         if (isOrderBelongsToUser["cancellable"] == true) {
-            if ((validator.isValidStatus(status))) {
+            if ((isValidStatus(status))) {
                 if (isOrderBelongsToUser['status'] == 'pending') {
                     const updateStatus = await orderModel.findOneAndUpdate({ _id: orderId }, {
                         $set: { status: status }
