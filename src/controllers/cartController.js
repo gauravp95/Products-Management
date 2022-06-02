@@ -1,8 +1,9 @@
-const {isValidRequestBody,isValid, validInstallment,isValidObjectId,validQuantity} = require('../utils/validators')
+const {isValidRequestBody,isValid,isValidObjectId,validQuantity} = require('../utils/validators')
 const productModel = require('../models/productModel')
 const userModel = require('../models/userModel')
 const cartModel = require('../models/cartModel')
-const { find } = require('../models/productModel')
+
+//1st Api - Create cart/Add product to existing cart
 
 const createCart = async function(req,res) {
     try {
@@ -86,6 +87,8 @@ const createCart = async function(req,res) {
         return res.status(500).send({status:false,message:err.message})
     }
 }
+
+//2nd Api - Update Cart
 
 const updateCart = async function (req,res) {
     try {
@@ -185,6 +188,8 @@ const updateCart = async function (req,res) {
     }
 }
 
+//3rd Api - Get Cart Details
+
 const getCart = async function(req, res) {
     try {
         const userId = req.params.userId;
@@ -218,4 +223,54 @@ const getCart = async function(req, res) {
         return res.status(500).send({status: false,message:err.message})
     }
 }
-module.exports = {createCart,updateCart,getCart}
+//4th Api - Delete Existing Cart
+
+const deleteCart = async function(req, res) {
+    try {
+        const userId = req.params.userId;
+        let tokenUserId = req.userId
+
+        //validating userId
+        if (!isValidObjectId(userId)) {
+            return res.status(400).send({ status: false, message: "Invalid userId in params." })
+        }
+        const findUser = await userModel.findOne({ _id: userId })
+        if (!findUser) {
+            return res.status(400).send({
+                status: false,
+                message: `User doesn't exists by ${userId} `
+            })
+        }
+
+        //Authentication & authorization
+        if (findUser._id.toString() != tokenUserId) {
+            res.status(401).send({ status: false, message: `Unauthorized access! User's info doesn't match` });
+            return
+        }
+
+        //finding cart
+        const findCart = await cartModel.findOne({ userId: userId })
+        if (!findCart) {
+            return res.status(400).send({
+                status: false,
+                message: `Cart doesn't exists by ${userId} `
+            })
+        }
+        //Basically not deleting the cart, just changing their value to 0.
+        const deleteCart = await cartModel.findOneAndUpdate({ userId: userId }, {
+            $set: {
+                items: [],
+                totalPrice: 0,
+                totalItems: 0
+            }
+        }, { new: true })
+        return res.status(204).send({status: true,message: "Cart deleted successfully",data: deleteCart})
+
+    } catch (err) {
+        return res.status(500).send({status: false,message:err.message})
+    }
+}
+
+//Exporting All Api's
+
+module.exports = {createCart,updateCart,getCart,deleteCart}

@@ -3,6 +3,8 @@ const productModel = require('../models/productModel');
 const config = require('../utils/awsconfig');
 const currSymbl = require('currency-symbol-map');
 
+
+//1st Api - Create Product
 const newProduct = async function (req,res) {
     try {
         let files = req.files;
@@ -116,6 +118,7 @@ const newProduct = async function (req,res) {
     }
 }
 
+//2nd Api - get products by filtering
 
 const getProducts = async function (req,res) {
     try {
@@ -193,6 +196,8 @@ const getProducts = async function (req,res) {
     }
 }
 
+// 3rd Api - get product by productId
+
 const getProdById = async function(req, res) {
     try {
         const productId = req.params.productId
@@ -213,5 +218,166 @@ const getProdById = async function(req, res) {
     }
 }
 
+//4th Api - Update product 
+const updateProduct = async function(req, res) {
+    try {
+        const requestBody = req.body
+        const params = req.params
+        const productId = params.productId
 
-module.exports = {newProduct,getProducts,getProdById}
+        // Validation stats
+        if (!isValidObjectId(productId)) {
+            return res.status(400).send({ status: false, message: `${productId} is not a valid product id` })
+        }
+
+        const product = await productModel.findOne({ _id: productId, isDeleted: false })
+
+        if (!product) {
+            return res.status(404).send({ status: false, message: `product not found` })
+        }
+
+        if (!(isValidRequestBody(requestBody) || req.files)) {
+            return res.status(400).send({ status: false, message: 'No paramateres passed. product unmodified', data: product })
+        }
+
+        // Extract params
+        const { title, description, price, currencyId, isFreeShipping, style, availableSizes, installments } = requestBody;
+
+        //Declaring an empty object then using hasOwnProperty to match the keys and setting the appropriate values.
+        const updatedProductDetails = {}
+
+        if (isValid(title)) {
+
+            const isTitleAlreadyUsed = await productModel.findOne({ title: title });
+
+            if (isTitleAlreadyUsed) {
+                return res.status(400).send({ status: false, message: `${title} title is already used` })
+            }
+
+            if (!updatedProductDetails.hasOwnProperty('title'))
+                updatedProductDetails['title'] = title
+        }
+
+        if (isValid(description)) {
+            if (!updatedProductDetails.hasOwnProperty('description'))
+                updatedProductDetails['description'] = description
+        }
+
+        //verifying price is number & must be greater than 0.
+        if (isValid(price)) {
+
+            if (!(!isNaN(Number(price)))) {
+                return res.status(400).send({ status: false, message: `Price should be a valid number` })
+            }
+
+            if (price <= 0) {
+                return res.status(400).send({ status: false, message: `Price should be a valid number` })
+            }
+
+            if (!updatedProductDetails.hasOwnProperty('price'))
+                updatedProductDetails['price'] = price
+        }
+        //verifying currency Id must be INR.
+        if (isValid(currencyId)) {
+
+            if (!(currencyId == "INR")) {
+                return res.status(400).send({ status: false, message: 'currencyId should be a INR' })
+            }
+
+            if (!updatedProductDetails.hasOwnProperty('currencyId'))
+                updatedProductDetails['currencyId'] = currencyId;
+        }
+
+        //shipping must be true/false.
+        if (isValid(isFreeShipping)) {
+
+            if (!((isFreeShipping === "true") || (isFreeShipping === "false"))) {
+                return res.status(400).send({ status: false, message: 'isFreeShipping should be a boolean value' })
+            }
+
+            if (!updatedProductDetails.hasOwnProperty('isFreeShipping'))
+                updatedProductDetails['isFreeShipping'] = isFreeShipping
+        }
+
+        //uploading images to AWS.
+        let productImage = req.files;
+        if ((productImage && productImage.length > 0)) {
+
+            let updatedproductImage = await config.uploadFile(productImage[0]);
+
+            if (!updatedProductDetails.hasOwnProperty('productImage'))
+                updatedProductDetails['productImage'] = updatedproductImage
+        }
+
+        if (isValid(style)) {
+
+            if (!updatedProductDetails.hasOwnProperty('style'))
+                updatedProductDetails['style'] = style
+        }
+
+        //validating sizes to take multiple sizes at a single attempt.
+        if (availableSizes) {
+            let sizesArray = availableSizes.split(",").map(x => x.trim())
+
+            for (let i = 0; i < sizesArray.length; i++) {
+                if (!(["S", "XS", "M", "X", "L", "XXL", "XL"].includes(sizesArray[i]))) {
+                    return res.status(400).send({ status: false, message: "AvailableSizes should be among ['S','XS','M','X','L','XXL','XL']" })
+                }
+            }
+            if (!updatedProductDetails.hasOwnProperty(updatedProductDetails, '$addToSet'))
+                updatedProductDetails['$addToSet'] = {}
+            updatedProductDetails['$addToSet']['availableSizes'] = { $each: sizesArray }
+        }
+
+        //verifying must be a valid no. & must be greater than 0.
+        if (isValid(installments)) {
+
+            if (!(!isNaN(Number(installments)))) {
+                return res.status(400).send({ status: false, message: `installments should be a valid number` })
+            }
+
+            if (!updatedProductDetails.hasOwnProperty('installments'))
+                updatedProductDetails['installments'] = installments
+        }
+
+        const updatedProduct = await productModel.findOneAndUpdate({ _id: productId }, updatedProductDetails, { new: true })
+
+        return res.status(200).send({ status: true, message: 'Successfully updated product details.', data: updatedProduct });
+    } catch (err) {
+        return res.status(500).send({status: false,message: err.message})
+    }
+}
+
+//5th Api - delete product
+
+const deleteProduct = async function(req, res) {
+    try {
+        const params = req.params
+        const productId = params.productId
+
+        //validation starts
+        if (!isValidObjectId(productId)) {
+            return res.status(400).send({ status: false, message: `${productId} is not a valid product id`})
+        }
+        //vaidation ends.
+
+        const product = await productModel.findOne({ _id: productId })
+
+        if (!product) {
+            return res.status(400).send({ status: false, message: `Product doesn't exists by ${productId}` })
+        }
+        if (product.isDeleted == false) {
+            await productModel.findOneAndUpdate({ _id: productId }, { $set: { isDeleted: true, deletedAt: new Date() } })
+
+            return res.status(200).send({ status: true, message: 'Product deleted successfully.' })
+        }
+        return res.status(400).send({ status: true, message: 'Product has been already deleted.' })
+
+
+    } catch (err) {
+        return res.status(500).send({status: false,message:err.message})
+    }
+}
+
+
+module.exports = {newProduct,getProducts,getProdById, updateProduct,deleteProduct};

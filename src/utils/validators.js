@@ -28,4 +28,8 @@ const validQuantity = function isInteger(value) {
     if (isNaN(Number(value))) return false
     if (value % 1 == 0) return true
 }
-module.exports = {isValid, isValidObjectId, isValidRequestBody, validString, validInstallment, validQuantity}
+
+const isValidStatus = function(status) {
+    return ['pending', 'completed', 'cancelled'].indexOf(status) !== -1
+}
+module.exports = {isValid, isValidObjectId, isValidRequestBody, validString, validInstallment, validQuantity,isValidStatus}
