@@ -18,7 +18,7 @@ const auth = async(req, res, next) => {
         if (Date.now() > (decodeToken.exp) * 1000) {
             return res.status(404).send({ status: false, message: 'Session Expired, please login again' })
         }
-         let verify =  jwt.verify(splitToken[1], 'Product-Management')
+        let verify =  jwt.verify(splitToken[1], 'Product-Management')
         if (!verify) {
             return res.status(403).send({ status: false, message: 'Invalid authentication token in request' })
         }

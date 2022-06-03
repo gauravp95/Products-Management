@@ -102,7 +102,7 @@ const createOrder = async function (req,res) {
 
 
 //2nd Api - updating order
-const updateOrder = async(req, res) => {
+const updateOrder = async function (req, res)  {
     try {
         const userId = req.params.userId;
         const requestBody = req.body;
@@ -185,12 +185,9 @@ const updateOrder = async(req, res) => {
                     return res.status(400).send({status: false,message: `Unable to update status due to Non-cancellation policy.`})
                 }
 
-                // if ((status === 'pending' || status === 'completed' || status === 'cancelled')) {
                 const updatedOrderDetails = await orderModel.findOneAndUpdate({ _id: orderId }, { $set: { status: status } }, { new: true })
 
                 return res.status(200).send({ status: true, message: `Successfully updated the order details.`, data: updatedOrderDetails })
-                    // }
-                    // return res.status(400).send({ status: true, message: `Status must be either- 'pending','completed' & 'cancelled'.` })
             }
         }
 
