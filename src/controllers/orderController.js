@@ -65,12 +65,10 @@ const createOrder = async function (req,res) {
             return res.status(400).send({status:false,message:'No items in cart, Please put items in cart first'})
         }
 
-        const reducer = (previousValue, currentValue) =>
-        previousValue + currentValue;
-
-    let totalQuantity = findCart.items
-        .map((x) => x.quantity)
-        .reduce(reducer);
+    let totalQuantity =0
+    for(let i =0;i<findCart.items.length;i++){
+       totalQuantity += findCart.items[i].quantity
+    }
 
     //object destructuring for response body.
     const orderDetails = {
